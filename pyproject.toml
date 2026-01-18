@@ -1,0 +1,14 @@
+[project]
+name = "essay-assistant-for-primary-student"
+version = "0.1.0"
+description = "Primary student essay reviewer using Generative AI"
+requires-python = ">=3.13"
+dependencies = [
+    "gradio>=5.0.0",
+    "google-generativeai>=0.8.0",
+    "Pillow>=11.0.0",
+    "dotenv>=0.9.9",
+    "openai>=2.15.0",
+    "pillow-heif>=1.1.1",
+]
+readme = "README.md"
