@@ -13,22 +13,9 @@ load_dotenv(override=True)
 google_api_key = os.getenv('GOOGLE_API_KEY')
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-use_gemini=False
-api_key = google_api_key if use_gemini else openai_api_key
 
 
-
-if api_key:
-    GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-    MODEL = os.getenv('GOOGLE_MODEL', 'gemini-2.5-flash') if use_gemini else os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-    TEMP = 0.7 if use_gemini else 1
-    client = OpenAI(base_url=GEMINI_BASE_URL, api_key=api_key) if use_gemini else OpenAI()
-    
-else:
-    print("Warning: API KEY not set")
-
-
-def recognize_text_from_single_image(image) -> str:
+def recognize_text_from_single_image(image, client, model_used) -> str:
     """Extract text from a single uploaded image using Gemini vision model."""
     if image is None:
         return ""
@@ -78,8 +65,9 @@ def recognize_text_from_single_image(image) -> str:
         ]
         
         # Use the client to send the image along with the prompt to the model for text recognition
+
         response = client.chat.completions.create(
-            model=MODEL,
+            model=model_used,
             messages=messages
         )
         recognized_text = response.choices[0].message.content
@@ -89,7 +77,7 @@ def recognize_text_from_single_image(image) -> str:
         return f"[Error recognizing text from image: {str(e)}]"
 
 
-def recognize_text_from_images(images: Optional[List]) -> str:
+def recognize_text_from_images(images: Optional[List], client: OpenAI, model_used: str) -> str:
     """Extract text from multiple images in order."""
     if not images or len(images) == 0:
         return "Please upload at least one image"
@@ -113,8 +101,8 @@ def recognize_text_from_images(images: Optional[List]) -> str:
         for idx, image in enumerate(image_list, 1):
             if image is None:
                 continue
-            
-            text = recognize_text_from_single_image(image)
+
+            text = recognize_text_from_single_image(image, client, model_used)
             if text and "[Error" not in text:
                 all_texts.append(text)
         
@@ -129,7 +117,7 @@ def recognize_text_from_images(images: Optional[List]) -> str:
         return f"Error recognizing text: {str(e)}"
 
 
-def analyze_essay(essay_text: str) -> str:
+def analyze_essay(essay_text: str, client: OpenAI, model_used: str, temp: float) -> str:
     """Analyze the essay using OpenAI client pattern to call Gemini API."""
     if not essay_text or essay_text.strip() == "":
         return "Please upload an image and recognize text first"
@@ -163,10 +151,10 @@ Essay Content:
             {"role": "user", "content": user_prompt}
         ]
         response = client.chat.completions.create(
-            model=MODEL,
+            model=model_used,
             messages=messages,
             max_completion_tokens=2000,
-            temperature=TEMP
+            temperature=temp,
         )
         
         analysis_result = response.choices[0].message.content
@@ -176,14 +164,25 @@ Essay Content:
         return f"Error analyzing essay: {str(e)}"
 
 
-def process_essay(images: Optional[List]) -> Tuple[str, str]:
+def process_essay(images: Optional[List], model: str) -> Tuple[str, str]:
     """Process the uploaded images: recognize text from all images in order and analyze essay."""
+    if model.startswith("gemini"):
+        GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+        client = OpenAI(base_url=GEMINI_BASE_URL, api_key=google_api_key)
+        temp = 0.7
+    elif model.startswith("gpt"):
+        client = OpenAI()
+        temp = 1
+    else:
+        return "Unsupported model selected", "Please select a supported model"
+    model_used = model
+
     # Step 1: Recognize text from all images in order
-    recognized_text = recognize_text_from_images(images)
+    recognized_text = recognize_text_from_images(images, client, model_used)
     
     # Step 2: Analyze the essay if text was recognized
     if recognized_text and recognized_text != "Please upload at least one image" and "Failed to recognize" not in recognized_text and "[Error" not in recognized_text:
-        analysis = analyze_essay(recognized_text)
+        analysis = analyze_essay(recognized_text, client, model_used, temp)
     else:
         analysis = "Please successfully recognize text from images before analysis"
     

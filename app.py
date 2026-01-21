@@ -150,6 +150,13 @@ with gr.Blocks(title="Primary Student Essay Reviewer", theme=gr.themes.Soft()) a
                 move_down_btn = gr.Button("⬇️ move down", size="sm")
                 remove_btn = gr.Button("🗑️ delete", size="sm", variant="stop")
             
+            model_selector = gr.Dropdown(
+                label="Select Analysis Model",
+                choices=["gpt-4.1-mini", "gpt-4o-mini", "gemini-2.5-flash"],
+                value="gemini-2.5-flash",
+                interactive=True
+            )
+            
             process_btn = gr.Button("Recognize and Analyze", variant="primary", size="lg")
         
         with gr.Column(scale=1):
@@ -194,10 +201,13 @@ with gr.Blocks(title="Primary Student Essay Reviewer", theme=gr.themes.Soft()) a
     # Process button click
     process_btn.click(
         fn=process_essay,
-        inputs=[image_state],
+        inputs=[image_state, model_selector],
         outputs=[recognized_text_output, analysis_output]
     )
     
 
 if __name__ == "__main__":
-    demo.launch(share=False, server_name="0.0.0.0", server_port=7860)
+    demo.launch(
+        share=False,   # Set to True to generate a public link
+        inbrowser=True,  # Open web app in browser on launch
+        )
