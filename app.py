@@ -151,7 +151,7 @@ with gr.Blocks(title="Primary Student Essay Reviewer", theme=gr.themes.Soft()) a
                 remove_btn = gr.Button("🗑️ delete", size="sm", variant="stop")
             
             model_selector = gr.Dropdown(
-                label="Select Analysis Model",
+                label="Select Model",
                 choices=["gpt-4.1-mini", "gpt-4o-mini", "gemini-2.5-flash"],
                 value="gemini-2.5-flash",
                 interactive=True
