@@ -6,6 +6,7 @@ from PIL import Image
 from dotenv import load_dotenv
 from openai import OpenAI
 from utils import convert_and_resize_image
+from datetime import datetime
 
 load_dotenv(override=True)
 
@@ -13,6 +14,9 @@ load_dotenv(override=True)
 google_api_key = os.getenv('GOOGLE_API_KEY')
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
+review_location = os.getenv("REVIEW_LOCATION", "analysis_results")
+if not os.path.exists(review_location):
+    os.makedirs(review_location)
 
 
 def recognize_text_from_single_image(image, client, model_used) -> str:
@@ -164,6 +168,18 @@ Essay Content:
         return f"Error analyzing essay: {str(e)}"
 
 
+def save_analysis_to_md(analysis: str, directory: str, filename: str) -> None:
+    """Save the analysis result to a markdown file."""
+
+    try:
+        with open(f"{directory}/{filename}.md", "w", encoding="utf-8") as f:
+            f.write(analysis)
+        print(f"Analysis saved to {directory}/{filename}.md")
+    except Exception as e:
+        print(f"Error saving analysis to markdown: {str(e)}")
+
+
+
 def process_essay(images: Optional[List], model: str) -> Tuple[str, str]:
     """Process the uploaded images: recognize text from all images in order and analyze essay."""
     if model.startswith("gemini"):
@@ -185,5 +201,10 @@ def process_essay(images: Optional[List], model: str) -> Tuple[str, str]:
         analysis = analyze_essay(recognized_text, client, model_used, temp)
     else:
         analysis = "Please successfully recognize text from images before analysis"
+    
+    # generate markdown file name based on current date and moel used
+    now = datetime.now().strftime("%Y-%m-%d")
+    filename = f"{now}_{model_used}"
+    save_analysis_to_md(analysis, review_location, filename)
     
     return recognized_text, analysis

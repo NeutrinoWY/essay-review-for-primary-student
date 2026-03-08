@@ -152,8 +152,8 @@ with gr.Blocks(title="Primary Student Essay Reviewer", theme=gr.themes.Soft()) a
             
             model_selector = gr.Dropdown(
                 label="Select Model",
-                choices=["gpt-4.1-mini", "gpt-4o-mini", "gemini-2.5-flash"],
-                value="gemini-2.5-flash",
+                choices=["gpt-5.4","gpt-5-mini","gemini-3-pro-preview", "gemini-3-flash-preview","gpt-4.1-mini", "gpt-4o-mini", "gemini-2.5-flash"],
+                value="gpt-5.4",
                 interactive=True
             )
             
